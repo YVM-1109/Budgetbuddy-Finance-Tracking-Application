@@ -46,6 +46,15 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-flyway</artifactId>
     </dependency>
+    <!-- Flyway 10+ needs a per-database plugin module for the database it migrates.
+         TiDB reports itself as MySQL 8.0, so the MySQL plugin is what Flyway needs.
+         Version must match the flyway-core version managed by the Boot BOM. -->
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-mysql</artifactId>
+      <version>12.4.0</version>
+      <scope>runtime</scope>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
