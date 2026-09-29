@@ -11,7 +11,8 @@ spans the last 12 calendar months. There's also a chatbot for general
 financial questions — deliberately walled off from your data, for reasons
 explained below.
 
-> **Status: feature-complete for V1, verified locally, not yet deployed.**
+> **Status: V1 is live.** Frontend on Vercel, API on Render, data in TiDB —
+> try it at **https://budgetbuddy-finance-tracking-applic.vercel.app**
 > See [Current status](#current-status--an-honest-snapshot) for the
 > unvarnished version.
 
@@ -202,7 +203,8 @@ admit a gap than paper over it.
 
 ## Current status — an honest snapshot
 
-**Verified working** (automated tests + live browser walkthrough):
+**Verified working** (automated tests + live browser walkthrough, local
+and now in production):
 
 - Registration, login, JWT protection, ownership isolation
 - Transaction CRUD, filtering, search, sorting, pagination, validation
@@ -214,6 +216,10 @@ admit a gap than paper over it.
 - Chat: authentication, input validation, graceful handling of every
   provider failure mode we could produce (unconfigured, unavailable,
   quota exhausted)
+- **Production deployment:** Flyway migrated `V1__init.sql` onto TiDB on
+  boot, `/actuator/health` reports UP, and a full register → login →
+  create-transaction loop ran through the live site — browser → Vercel →
+  Render → TiDB — with the data persisting and reading back correctly
 
 **Built but not yet verified** — each blocked on a credential or a live
 environment, not on code:
@@ -222,7 +228,6 @@ environment, not on code:
 |------|----------------|
 | Chat happy path | The OpenAI account used for testing ran out of credits before a real completion came back. Request plumbing and error mapping are verified; the response parser has yet to see a genuine payload. |
 | Google Sign-In | Needs a real OAuth client ID (Google Cloud Console) — the verification code is written and unit-shaped, never exercised against Google. |
-| TiDB in production | All testing ran on H2 in MySQL mode. Migration, TLS, and query behavior on actual TiDB is assumption ASM-001 in the spec, to be verified at deployment. |
 | The scheduled job in the wild | Generation runs at 00:10 Asia/Kolkata; only the startup catch-up path (same code) has fired. Needs a live day boundary. |
 | Recurring edge cases | End dates, day-31 clamping to short months, deactivation/reactivation — implemented, not yet under test. |
 
@@ -230,12 +235,26 @@ environment, not on code:
 
 ## Deployment
 
-The intended topology — **Vercel** for the frontend, **Render** for the
-backend, **TiDB Cloud** for the database — is documented step by step in
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), including the environment
-variable contract, Google OAuth origin configuration, and a post-deployment
-verification checklist. Secrets live exclusively in platform environment
-configuration; nothing sensitive is or belongs in this repository.
+That intended topology is now the real one:
+
+| Piece | Where | Notes |
+|-------|-------|-------|
+| Frontend | Vercel | https://budgetbuddy-finance-tracking-applic.vercel.app, root `frontend/`, SPA rewrite via `vercel.json` |
+| Backend | Render (Docker) | https://budgetbuddy-api-cfmp.onrender.com, free instance — cold-starts after ~15 min idle, so the first request can take ~50s |
+| Database | TiDB Cloud Starter | Tokyo region; Flyway applies migrations on boot |
+
+The full runbook — environment variable contract, Google OAuth origin
+configuration, and a post-deployment verification checklist — lives in
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Secrets live exclusively in
+platform environment configuration; nothing sensitive is or belongs in
+this repository.
+
+One deployment-specific fix worth knowing about: TiDB reports itself to
+Flyway as "MySQL 8.0", and Spring Boot's managed Flyway module ships
+without a MySQL database plugin. The backend adds
+`org.flywaydb:flyway-mysql` (version-matched to `flyway-core`) to make
+migrations run — without it, startup fails with `Unsupported Database:
+MySQL 8.0`.
 
 ---
 
