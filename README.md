@@ -9,7 +9,8 @@ items (salary, rent, that EMI you keep forgetting), define one monthly budget
 and one savings target, and then see the whole picture on a dashboard that
 spans the last 12 calendar months. There's also a chatbot for general
 financial questions — deliberately walled off from your data, for reasons
-explained below.
+explained below. 
+DISCLAIMER: The server will close on inactivity and will have to be restarted for a demo, also, the AI chatbot is currently not working due to the API Key having exhausted its tokens.
 
 > **Status: V1 is live.** Frontend on Vercel, API on Render, data in TiDB —
 > try it at **https://budgetbuddy-finance-tracking-applic.vercel.app**
