@@ -2,12 +2,15 @@ package com.budgetbuddy.chat;
 
 import com.budgetbuddy.common.error.ApiException;
 import com.budgetbuddy.common.error.ErrorCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.net.URI;
 import java.time.Duration;
@@ -21,6 +24,8 @@ import java.util.Map;
  */
 @Component
 public class OpenAiChatClient {
+
+    private static final Logger log = LoggerFactory.getLogger(OpenAiChatClient.class);
 
     private static final URI RESPONSES_URL = URI.create("https://api.openai.com/v1/responses");
     private static final String SYSTEM_PROMPT =
@@ -63,6 +68,21 @@ public class OpenAiChatClient {
                     .retrieve()
                     .body(Map.class);
             return extractText(response);
+        } catch (RestClientResponseException e) {
+            int upstream = e.getStatusCode().value();
+            if (upstream == 429) {
+                // Provider quota exhausted or rate limited (API_SPEC: 429).
+                throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, ErrorCode.RATE_LIMITED,
+                        "The chat provider's quota is exhausted or rate-limited. Please try again later.");
+            }
+            if (upstream == 401 || upstream == 403) {
+                log.error("OpenAI rejected the configured API key (HTTP {}).", upstream);
+                throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.CHAT_UPSTREAM_ERROR,
+                        "Chat is misconfigured on the server.");
+            }
+            log.warn("OpenAI request failed with HTTP {}", upstream);
+            throw new ApiException(HttpStatus.BAD_GATEWAY, ErrorCode.CHAT_UPSTREAM_ERROR,
+                    "Chat provider is unavailable. Please retry shortly.");
         } catch (RestClientException e) {
             throw new ApiException(HttpStatus.BAD_GATEWAY, ErrorCode.CHAT_UPSTREAM_ERROR,
                     "Chat provider is unavailable. Please retry shortly.");
