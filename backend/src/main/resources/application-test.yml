@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+
+budgetbuddy:
+  jwt:
+    secret: test-secret-test-secret-test-secret-test-secret-32
+    expiration-minutes: 30
+  chat:
+    openai-api-key: ${OPENAI_API_KEY:test-key}
+    model: gpt-5.5
+    timeout-seconds: 5
+    max-input-length: 2000
+
+app:
+  timezone: Asia/Kolkata
+  base-url: http://localhost:8080

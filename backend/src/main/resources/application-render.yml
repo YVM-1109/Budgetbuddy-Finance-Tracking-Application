@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:h2:mem:budgetbuddy;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=LOWER}
+    username: ${DATABASE_USERNAME:sa}
+    password: ${DATABASE_PASSWORD:}
+    driver-class-name: org.h2.Driver
+
+budgetbuddy:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  chat:
+    openai-api-key: ${OPENAI_API_KEY:}
+    model: ${OPENAI_MODEL:gpt-5.5}
+    timeout-seconds: 45
+    max-input-length: 2000
+
+app:
+  timezone: ${APP_TIMEZONE:Asia/Kolkata}
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+
+logging:
+  level:
+    org.hibernate.SQL: warn
+    com.budgetbuddy: info
